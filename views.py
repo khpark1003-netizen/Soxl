@@ -411,16 +411,17 @@ def market_state_html(c):
 
 # ------------------------------------------------------------------
 def checklist_html(cur, row):
+    """폰에서 줄바꿈 없이 한 줄씩 보이도록: 항목명 | (일치면 값 / 불일치면 현재 → 조합)"""
     conditions = [
-        ("RSI 구간", cur["rsi_zone"], row["RSI구간"]),
+        ("RSI", cur["rsi_zone"], row["RSI구간"]),
         ("추세", cur["trend"], row["추세"]),
-        ("BB 위치", cur["bb_zone"], row["BB위치"]),
-        ("낙폭 구간", cur["dd_zone"], row["낙폭구간"]),
+        ("BB", cur["bb_zone"], row["BB위치"]),
+        ("낙폭", cur["dd_zone"], row["낙폭구간"]),
         ("MACD", cur["macd_dir"], row["MACD방향"]),
-        ("ATR 변동성", cur["atr_zone"], row["ATR변동성"]),
-        ("ADX 추세강도", cur["adx_zone"], row["ADX추세강도"]),
-        ("장기추세", cur["long_trend"], row["장기추세"]),
-        ("시장레짐", cur["market_regime"], row["시장레짐"]),
+        ("ATR", cur["atr_zone"], row["ATR변동성"]),
+        ("ADX", cur["adx_zone"], row["ADX추세강도"]),
+        ("장기", cur["long_trend"], row["장기추세"]),
+        ("레짐", cur["market_regime"], row["시장레짐"]),
     ]
     n_cond = len(conditions)
     matched = sum(1 for _, c, t in conditions if c == t)
@@ -430,29 +431,35 @@ def checklist_html(cur, row):
     for label, c, t in conditions:
         ok = c == t
         bg, color = ("#1b5e20", "#e8f5e9") if ok else ("#3e2723", "#efebe9")
-        tgt = f"<b style='color:#a5d6a7'>{t}</b>" if ok else f"<span style='color:#bcaaa4'>{t}</span>"
+        if ok:
+            val = f"<b>{c}</b>"
+        else:
+            val = (f"{c} <span style='color:#ef9a9a'>→</span> "
+                   f"<b style='color:#ffcc80'>{t}</b>")
         rows_html += (f"<tr style='background:{bg};color:{color}'>"
-                      f"<td style='padding:6px 12px;font-weight:bold;white-space:nowrap'>{'✅' if ok else '❌'} {label}</td>"
-                      f"<td style='padding:6px 12px'>현재: <b>{c}</b></td>"
-                      f"<td style='padding:6px 12px'>조합: {tgt}</td></tr>")
+                      f"<td style='padding:6px 8px;font-weight:bold;white-space:nowrap'>{'✅' if ok else '❌'} {label}</td>"
+                      f"<td style='padding:6px 8px;white-space:nowrap'>{val}</td></tr>")
 
     grade = row["🏆등급"] if row["🏆등급"] else "(등급 없음)"
     gc = {"🏆 황금": "#ffca28", "★★ 신뢰": "#64b5f6", "💰 수익": "#81c784"}.get(row["🏆등급"], "#aaa")
+    nb = "white-space:nowrap;margin-right:12px"
     return f"""
-    <div style='font-family:monospace;background:#212121;border-radius:10px;padding:16px;margin:10px 0;color:#eee'>
-      <div style='font-size:15px;font-weight:bold;margin-bottom:10px'>
-        조건 일치: {matched} / {n_cond} &nbsp;
-        <span style='color:{bar_color};letter-spacing:3px'>{"█"*matched}{"░"*(n_cond-matched)}</span>
-        &nbsp;&nbsp;<span style='color:{gc}'>{grade}</span>
+    <div style='font-family:monospace;background:#212121;border-radius:10px;padding:12px;margin:10px 0;color:#eee'>
+      <div style='display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;font-size:15px;font-weight:bold;margin-bottom:6px'>
+        <span style='{nb}'>조건 일치 {matched}/{n_cond}</span>
+        <span style='{nb};color:{bar_color};letter-spacing:2px'>{"█"*matched}{"░"*(n_cond-matched)}</span>
+        <span style='{nb};color:{gc}'>{grade}</span>
       </div>
-      {_scroll(f"<table style='border-collapse:collapse;width:100%;border-radius:6px;overflow:hidden'>{rows_html}</table>")}
-      <div style='margin-top:12px;font-size:13px;color:#ccc;border-top:1px solid #444;padding-top:10px'>
-        최적보유일 <b style='color:#fff'>{row["최적보유일"]}일</b> | 승률 <b style='color:#fff'>{row["승률%"]}%</b> |
-        기대값 <b style='color:#fff'>{row["기대값점수"]}</b> | 유의성 <b style='color:#fff'>{row["유의성"]}</b> |
-        샘플 <b style='color:#fff'>{row["횟수"]}회</b>
+      <div style='font-size:11px;color:#888;margin-bottom:8px'>❌ 줄은 「현재 → 조합」 순서입니다</div>
+      {_scroll(f"<table style='border-collapse:collapse;width:100%;font-size:13px;border-radius:6px;overflow:hidden'>{rows_html}</table>")}
+      <div style='display:flex;flex-wrap:wrap;gap:4px 0;margin-top:10px;font-size:12px;color:#ccc;border-top:1px solid #444;padding-top:8px'>
+        <span style='{nb}'>최적 <b style='color:#fff'>{row["최적보유일"]}일</b></span>
+        <span style='{nb}'>승률 <b style='color:#fff'>{row["승률%"]}%</b></span>
+        <span style='{nb}'>기대값 <b style='color:#fff'>{row["기대값점수"]}</b></span>
+        <span style='{nb}'>샘플 <b style='color:#fff'>{row["횟수"]}회</b></span>
+        <span style='{nb}'>유의성 <b style='color:#fff'>{row["유의성"]}</b></span>
       </div>
     </div>"""
-
 
 # ------------------------------------------------------------------
 def gold_distribution_html(df_gold):
